@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Steuerberechnung - Motorbezogene Versicherungssteuer für Elektrofahrzeuge</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
+  <div class="bg-white p-6 rounded shadow-md w-full max-w-lg">
+    <!-- Großer Haupttitel und kleinerer Untertitel -->
+    <h1 class="text-3xl font-bold mb-1 text-center">Steuerberechnung</h1>
+    <h2 class="text-1xl font-medium mb-8 text-center">Motorbezogene Versicherungssteuer für Elektrofahrzeuge</h2>
+    
+    <div class="mb-4">
+      <label for="dauerleistung" class="block text-gray-700">Dauerleistung in kW</label>
+      <input type="number" id="dauerleistung" class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="z.B. 125">
+    </div>
+    <div class="mb-4">
+      <label for="gewicht" class="block text-gray-700">Fahrzeugleergewicht in kg</label>
+      <input type="number" id="gewicht" class="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="z.B. 1200">
+    </div>
+    
+    <button id="calculateBtn" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors">Berechnen</button>
+    
+    <div id="result" class="mt-6 p-4 bg-gray-50 rounded border">
+      <p id="leistungTax" class="mb-2"></p>
+      <p id="gewichtTax" class="mb-2"></p>
+      <p id="totalTax" class="font-bold"></p>
+    </div>
+    
+    <!-- Mehr Infos Button -->
+    <button id="toggleBreakdown" class="w-full mt-4 bg-green-500 text-white py-2 rounded hover:bg-green-600 transition-colors hidden">Mehr Infos</button>
+    
+    <!-- Breakdown-Bereich -->
+    <div id="breakdown" class="mt-4 p-4 bg-gray-100 border rounded hidden">
+      <h2 class="text-xl font-semibold mb-2">Berechnungsübersicht</h2>
+      <div class="mb-2">
+        <h3 class="font-semibold">Leistungsteil:</h3>
+        <p>
+          Dauerleistung aus Zulassungsschein minus 45 kW (mind. 10 kW verbleibend).<br>
+          - Für die ersten 35 kW: 0,25 €/kW<br>
+          - Für die nächsten 25 kW: 0,35 €/kW<br>
+          - Für jeden weiteren kW: 0,45 €/kW
+          <br><br>
+          <strong>Detailrechnung:</strong><br>
+          <!-- Hier wird die detaillierte Rechnung eingefügt -->
+        </p>
+      </div>
+      <div>
+        <h3 class="font-semibold">Gewichtsteil:</h3>
+        <p>
+          Fahrzeugleergewicht minus 900 kg (mind. 200 kg verbleibend).<br>
+          - Für die ersten 500 kg: 0,015 €/kg<br>
+          - Für die nächsten 700 kg: 0,030 €/kg<br>
+          - Für jeden weiteren kg: 0,045 €/kg
+          <br><br>
+          <strong>Detailrechnung:</strong><br>
+          <!-- Hier wird die detaillierte Rechnung eingefügt -->
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Link zum Repository -->
+  <footer class="mt-6">
+    <a href="https://github.com/bitbuyAT/ecar-tax-calculator-at" target="_blank" class="text-blue-500 hover:underline">Repository auf GitHub</a>
+  </footer>
+
+  <script>
+    const calculateBtn = document.getElementById('calculateBtn');
+    const toggleBreakdown = document.getElementById('toggleBreakdown');
+    const breakdown = document.getElementById('breakdown');
+    const leistungTaxElem = document.getElementById('leistungTax');
+    const gewichtTaxElem = document.getElementById('gewichtTax');
+    const totalTaxElem = document.getElementById('totalTax');
+    
+    calculateBtn.addEventListener('click', function() {
+      // Eingaben auslesen
+      const dauerleistungInput = document.getElementById('dauerleistung').value;
+      const gewichtInput = document.getElementById('gewicht').value;
+      
+      const dauerleistung = parseFloat(dauerleistungInput);
+      const gewicht = parseFloat(gewichtInput);
+      
+      if (isNaN(dauerleistung) || isNaN(gewicht)) {
+        alert("Bitte geben Sie gültige Zahlenwerte ein.");
+        return;
+      }
+      
+      // Steuerberechnung für Leistung
+      // Bereinigte Leistung: Dauerleistung minus 45 kW, mindestens 10 kW
+      let bereinigteLeistung = Math.max(dauerleistung - 45, 10);
+      let leistungSteuer = 0;
+      let leistungDetails = "";
+      
+      if (bereinigteLeistung <= 35) {
+        leistungSteuer = bereinigteLeistung * 0.25;
+        leistungDetails = `Bereinigte Leistung: ${bereinigteLeistung} kW<br>
+                           0 - ${bereinigteLeistung} kW: ${bereinigteLeistung} * 0,25 € = ${leistungSteuer.toFixed(2)} €`;
+      } else {
+        // erste 35 kW
+        leistungSteuer = 35 * 0.25;
+        leistungDetails = `Erste 35 kW: 35 * 0,25 € = ${(35 * 0.25).toFixed(2)} €<br>`;
+        let restLeistung = bereinigteLeistung - 35;
+        if (restLeistung <= 25) {
+          leistungSteuer += restLeistung * 0.35;
+          leistungDetails += `Nächste ${restLeistung} kW: ${restLeistung} * 0,35 € = ${(restLeistung * 0.35).toFixed(2)} €`;
+        } else {
+          leistungSteuer += 25 * 0.35;
+          leistungDetails += `Nächste 25 kW: 25 * 0,35 € = ${(25 * 0.35).toFixed(2)} €<br>`;
+          restLeistung -= 25;
+          leistungSteuer += restLeistung * 0.45;
+          leistungDetails += `Darüber hinaus ${restLeistung} kW: ${restLeistung} * 0,45 € = ${(restLeistung * 0.45).toFixed(2)} €`;
+        }
+      }
+      
+      // Steuerberechnung für Gewicht
+      // Bereinigtes Gewicht: Fahrzeuggewicht minus 900 kg, mindestens 200 kg
+      let bereinigtesGewicht = Math.max(gewicht - 900, 200);
+      let gewichtSteuer = 0;
+      let gewichtDetails = "";
+      
+      if (bereinigtesGewicht <= 500) {
+        gewichtSteuer = bereinigtesGewicht * 0.015;
+        gewichtDetails = `Bereinigtes Gewicht: ${bereinigtesGewicht} kg<br>
+                          0 - ${bereinigtesGewicht} kg: ${bereinigtesGewicht} * 0,015 € = ${gewichtSteuer.toFixed(2)} €`;
+      } else {
+        // erste 500 kg
+        gewichtSteuer = 500 * 0.015;
+        gewichtDetails = `Erste 500 kg: 500 * 0,015 € = ${(500 * 0.015).toFixed(2)} €<br>`;
+        let restGewicht = bereinigtesGewicht - 500;
+        if (restGewicht <= 700) {
+          gewichtSteuer += restGewicht * 0.030;
+          gewichtDetails += `Nächste ${restGewicht} kg: ${restGewicht} * 0,030 € = ${(restGewicht * 0.030).toFixed(2)} €`;
+        } else {
+          gewichtSteuer += 700 * 0.030;
+          gewichtDetails += `Nächste 700 kg: 700 * 0,030 € = ${(700 * 0.030).toFixed(2)} €<br>`;
+          restGewicht -= 700;
+          gewichtSteuer += restGewicht * 0.045;
+          gewichtDetails += `Darüber hinaus ${restGewicht} kg: ${restGewicht} * 0,045 € = ${(restGewicht * 0.045).toFixed(2)} €`;
+        }
+      }
+      
+      const gesamtSteuer = leistungSteuer + gewichtSteuer;
+      
+      // Ergebnisse anzeigen
+      leistungTaxElem.innerHTML = "Leistungssteuer: " + leistungSteuer.toFixed(2) + " €";
+      gewichtTaxElem.innerHTML = "Gewichtsteuer: " + gewichtSteuer.toFixed(2) + " €";
+      totalTaxElem.innerHTML = "Gesamtsteuer: " + gesamtSteuer.toFixed(2) + " €";
+      
+      // Breakdown-Inhalt aktualisieren
+      breakdown.innerHTML = `
+        <h2 class="text-xl font-semibold mb-2">Berechnungsübersicht</h2>
+        <div class="mb-2">
+          <h3 class="font-semibold">Leistungsteil:</h3>
+          <p>
+            Dauerleistung aus Zulassungsschein minus 45 kW (mind. 10 kW verbleibend).<br>
+            - Für die ersten 35 kW: 0,25 €/kW<br>
+            - Für die nächsten 25 kW: 0,35 €/kW<br>
+            - Für jeden weiteren kW: 0,45 €/kW
+            <br><br>
+            <strong>Detailrechnung:</strong><br>
+            ${leistungDetails}
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold">Gewichtsteil:</h3>
+          <p>
+            Fahrzeugleergewicht minus 900 kg (mind. 200 kg verbleibend).<br>
+            - Für die ersten 500 kg: 0,015 €/kg<br>
+            - Für die nächsten 700 kg: 0,030 €/kg<br>
+            - Für jeden weiteren kg: 0,045 €/kg
+            <br><br>
+            <strong>Detailrechnung:</strong><br>
+            ${gewichtDetails}
+          </p>
+        </div>
+      `;
+      
+      // "Mehr Infos"-Button anzeigen, falls noch nicht sichtbar
+      if (toggleBreakdown.classList.contains('hidden')) {
+        toggleBreakdown.classList.remove('hidden');
+      }
+    });
+    
+    // Toggle für Breakdown-Bereich
+    toggleBreakdown.addEventListener('click', function() {
+      breakdown.classList.toggle('hidden');
+      toggleBreakdown.textContent = breakdown.classList.contains('hidden') ? "Mehr Infos" : "Weniger Infos";
+    });
+  </script>
+</body>
+</html>
